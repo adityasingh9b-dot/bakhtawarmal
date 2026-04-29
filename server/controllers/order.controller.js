@@ -5,6 +5,7 @@ import OrderModel from "../models/order.model.js";
 import UserModel from "../models/user.model.js";
 import ProductModel from "../models/product.model.js";
 import admin from "firebase-admin";
+import axios from "axios";
 
 // ✅ Helper to send notification to Admin App
 const sendOrderNotification = async (orderId, amount) => {
@@ -35,7 +36,42 @@ const sendOrderNotification = async (orderId, amount) => {
   }
 };
 
-// ✅ Cash on Delivery
+// ✅ Helper to send Telegram Alert (Function ke upar ya file ke end mein rakhein)
+const sendTelegramCODAlert = async (orderId, totalAmt, list_items, userId, addressId) => {
+  try {
+    const BOT_TOKEN = '8787474329:AAF-aIeurWkZPtWCIibYToBLqoailaaKUPY';
+    const CHAT_ID = '6893216524';
+
+    // User aur Address details fetch karein (ID se details nikalne ke liye)
+    const user = await UserModel.findById(userId);
+    const address = await mongoose.model('address').findById(addressId); 
+
+    let itemsSummary = "";
+    list_items.forEach((item, i) => {
+      itemsSummary += `${i + 1}. *${item.productId.name}* (Qty: ${item.quantity})\n`;
+    });
+
+    const caption = `💰 *NEW COD ORDER!* 💰\n\n` +
+      `👤 *Customer:* ${user?.name || "Unknown"}\n` +
+      `📞 *Phone:* ${address?.mobile || user?.mobile || "N/A"}\n` +
+      `📍 *Address:* ${address?.address_line || "Check Admin Panel"}\n\n` +
+      `📦 *Items:* \n${itemsSummary}\n` +
+      `💰 *Total Bill:* ₹${totalAmt}\n` +
+      `🚚 *Status:* CASH ON DELIVERY\n\n` +
+      `✅ _HDS: Order deliver karne ki taiyari karo!_`;
+
+    await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+      chat_id: CHAT_ID,
+      photo: list_items[0].productId.image[0], // Pehle item ki Cloudinary image
+      caption: caption,
+      parse_mode: 'Markdown'
+    });
+  } catch (err) {
+    console.error("❌ Telegram Alert Error:", err.message);
+  }
+};
+
+// ✅ Cash on Delivery (Modified Function)
 export async function CashOnDeliveryOrderController(request, response) {
   try {
     const userId = request.userId;
@@ -75,7 +111,10 @@ export async function CashOnDeliveryOrderController(request, response) {
     await CartProductModel.deleteMany({ userId });
     await UserModel.updateOne({ _id: userId }, { shopping_cart: [] });
 
-    // 🔥 NOTIFY ADMIN IMMEDIATELY
+    // 🔥 TELEGRAM ALERT SEND KARO (COD ke liye)
+    sendTelegramCODAlert(orderId, totalAmt, list_items, userId, addressId);
+
+    // 🔥 NOTIFY ADMIN IMMEDIATELY (Purana Firebase logic)
     sendOrderNotification(orderId, totalAmt);
 
     return response.json({
