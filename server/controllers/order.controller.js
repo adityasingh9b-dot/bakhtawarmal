@@ -36,13 +36,13 @@ const sendOrderNotification = async (orderId, amount) => {
   }
 };
 
-// ✅ Helper to send Telegram Alert (Function ke upar ya file ke end mein rakhein)
+// ✅ Helper to send Telegram Album Alert (Proper Fix)
 const sendTelegramCODAlert = async (orderId, totalAmt, list_items, userId, addressId) => {
   try {
     const BOT_TOKEN = '8787474329:AAF-aIeurWkZPtWCIibYToBLqoailaaKUPY';
     const CHAT_ID = '6893216524';
 
-    // User aur Address details fetch karein (ID se details nikalne ke liye)
+    // User aur Address details fetch karein
     const user = await UserModel.findById(userId);
     const address = await mongoose.model('address').findById(addressId); 
 
@@ -60,14 +60,26 @@ const sendTelegramCODAlert = async (orderId, totalAmt, list_items, userId, addre
       `🚚 *Status:* CASH ON DELIVERY\n\n` +
       `✅ _HDS: Order deliver karne ki taiyari karo!_`;
 
-    await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-      chat_id: CHAT_ID,
-      photo: list_items[0].productId.image[0], // Pehle item ki Cloudinary image
-      caption: caption,
-      parse_mode: 'Markdown'
+    // Saari images ka media array banao (Max 10 images)
+    const mediaGroup = list_items.slice(0, 10).map((item, index) => {
+      return {
+        type: 'photo',
+        media: item.productId.image[0], // Cloudinary URL
+        caption: index === 0 ? caption : '', // Caption sirf pehli image par aayega
+        parse_mode: 'Markdown'
+      };
     });
+
+    // Album bhejne ke liye sendMediaGroup use karenge
+    await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMediaGroup`, {
+      chat_id: CHAT_ID,
+      media: JSON.stringify(mediaGroup)
+    });
+
+    console.log("✅ Telegram Album Alert Sent successfully");
   } catch (err) {
-    console.error("❌ Telegram Alert Error:", err.message);
+    // Agar album fail ho toh fallback to simple photo (Optional but safe)
+    console.error("❌ Telegram Album Alert Error:", err.response?.data || err.message);
   }
 };
 
