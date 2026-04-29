@@ -46,19 +46,33 @@ const sendTelegramCODAlert = async (orderId, totalAmt, list_items, userId, addre
     const user = await UserModel.findById(userId);
     const address = await mongoose.model('address').findById(addressId); 
 
+    // Items listing with 1 line gap (\n\n) between each item
     let itemsSummary = "";
     list_items.forEach((item, i) => {
-      itemsSummary += `${i + 1}. *${item.productId.name}* (Qty: ${item.quantity})\n`;
+      itemsSummary += `🔹 ${i + 1}. *${item.productId.name}*\n     Qty: ${item.quantity} | Price: ₹${item.productId.price}\n\n`; 
     });
 
-    const caption = `💰 *NEW COD ORDER!* 💰\n\n` +
-      `👤 *Customer:* ${user?.name || "Unknown"}\n` +
-      `📞 *Phone:* ${address?.mobile || user?.mobile || "N/A"}\n` +
-      `📍 *Address:* ${address?.address_line || "Check Admin Panel"}\n\n` +
-      `📦 *Items:* \n${itemsSummary}\n` +
-      `💰 *Total Bill:* ₹${totalAmt}\n` +
-      `🚚 *Status:* CASH ON DELIVERY\n\n` +
-      `✅ _HDS: Order deliver karne ki taiyari karo!_`;
+    // Formatting with 3 lines gap (\n\n\n) between different sections
+    const caption = `💰 *NEW COD ORDER!* 💰\n\n\n` +
+      
+      `👤 *CUSTOMER DETAILS*\n` +
+      `━━━━━━━━━━━━━━━\n` +
+      `Name: ${user?.name || "Unknown"}\n` +
+      `Phone: ${address?.mobile || user?.mobile || "N/A"}\n` +
+      `Address: ${address?.address_line || "Check Admin Panel"}\n\n\n` +
+      
+      `📦 *ORDERED ITEMS*\n` +
+      `━━━━━━━━━━━━━━━\n` +
+      `${itemsSummary}\n\n` +
+      
+      `💰 *BILLING SUMMARY*\n` +
+      `━━━━━━━━━━━━━━━\n` +
+      `Subtotal: ₹${totalAmt - 50}\n` + // Agar totalAmt mein delivery included hai
+      `Delivery: ₹50\n` +
+      `*Total Bill: ₹${totalAmt}*\n` +
+      `Payment: CASH ON DELIVERY\n\n\n` +
+      
+      `✅ _HDS: Bhai, jaldi se order pack karo aur nikal jao!_`;
 
     // Saari images ka media array banao (Max 10 images)
     const mediaGroup = list_items.slice(0, 10).map((item, index) => {
