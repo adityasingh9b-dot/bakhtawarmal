@@ -51,7 +51,7 @@ const app = express()
 // FIXED CORS: Added origin cleanup and validation
 const allowedOrigins = [
     process.env.FRONTEND_URL?.replace(/\/$/, ""), // Removes trailing slash
-    "https://heerastore.vercel.app", // Explicitly added for safety
+    "https://bhakhtawarmal.vercel.app", // Explicitly added for safety
     "http://localhost:5173",
     "capacitor://localhost",
     "http://localhost",
