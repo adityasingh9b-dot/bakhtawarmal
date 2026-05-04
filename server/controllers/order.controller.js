@@ -68,8 +68,8 @@ const sendTelegramCODAlert = async (orderId, totalAmt, list_items, userId, addre
       `💰 *BILLING SUMMARY*\n` +
       `━━━━━━━━━━━━━━━\n` +
       `Subtotal: ₹${totalAmt - 50}\n` + // Agar totalAmt mein delivery included hai
-      `Delivery: ₹40\n` +
-      `*Total Bill: ₹${totalAmt - 10}*\n` +
+      `Delivery: ₹50\n` +
+      `*Total Bill: ₹${totalAmt}*\n` +
       `Payment: CASH ON DELIVERY\n\n\n` +
       
       `✅ _HDS: Bhai, jaldi se order pack karo aur nikal jao!_`;
