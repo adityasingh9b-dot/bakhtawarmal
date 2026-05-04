@@ -18,7 +18,7 @@ const CheckoutPage = () => {
   const cartItemsList = useSelector(state => state.cartItem.cart)
   const navigate = useNavigate()
 
-  const deliveryCharge = 50 
+  const deliveryCharge = 40
 
   const handleCashOnDelivery = async() => {
       try {
