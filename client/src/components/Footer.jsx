@@ -3,20 +3,24 @@ import { FaWhatsapp, FaDownload, FaCommentDots } from "react-icons/fa";
 
 const Footer = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isInstallable, setIsInstallable] = useState(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
-      // Browser ke default prompt ko roko aur state me save karo
+      // 1. Browser ke default prompt ko roko
       e.preventDefault();
+      // 2. Event ko save karo
       setDeferredPrompt(e);
-      console.log('PWA installation prompt is ready to be triggered!');
+      // 3. Footer me button ko show karo (jaise index.html me display: block kiya tha)
+      setIsInstallable(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
+    // Hide if App Is Already Installed Successfully
     window.addEventListener('appinstalled', () => {
       setDeferredPrompt(null);
-      alert('AdiMart app aapke home screen par successfully save ho gayi hai! 🎉');
+      setIsInstallable(false);
     });
 
     return () => {
@@ -26,26 +30,19 @@ const Footer = () => {
 
   const handleInstallClick = async (e) => {
     e.preventDefault();
+    if (!deferredPrompt) return;
     
-    // 1. Agar browser ne native prompt ready kar diya hai
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-      }
-      setDeferredPrompt(null);
-    } else {
-      // 2. Fallback: Agar browser prompt ready nahi hai (iOS/Safari ya chrome delay)
-      // Check if it's iOS
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-      
-      if (isIOS) {
-        alert("iPhone/iPad ke liye:\n1. Neeche Share button (📤) par click karein.\n2. Thoda niche jaakar 'Add to Home Screen' (+ ) par tap karein!");
-      } else {
-        alert("Shortcut lagane ke liye:\n1. Upar ya neeche diye gaye Browser ke 3-dots (⋮) par click karein.\n2. 'Add to Home Screen' ya 'Install App' par tap karein!");
-      }
+    // 4. Footer button click par seedhe prompt open karo
+    deferredPrompt.prompt();
+    
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      console.log('AdiMart application shortcut successfully pinned!');
     }
+    
+    // 5. State clean karo aur button ko hide kar do
+    setDeferredPrompt(null);
+    setIsInstallable(false);
   };
 
   return (
@@ -60,14 +57,16 @@ const Footer = () => {
             {/* Main Actions Container */}
             <div className='flex flex-wrap items-center justify-center gap-2 order-1 md:order-2'>
                 
-                {/* ALWAYS VISIBLE INSTALL APP BUTTON */}
-                <button 
-                    onClick={handleInstallClick}
-                    className='flex items-center gap-1.5 bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-all text-xs font-bold shadow-md active:scale-95'
-                >
-                    <FaDownload className='text-xs'/>
-                    INSTALL APP
-                </button>
+                {/* DYNAMIC INSTALL APP BUTTON - Tabhi dikhega jab browser ready hoga */}
+                {isInstallable && (
+                    <button 
+                        onClick={handleInstallClick}
+                        className='flex items-center gap-1.5 bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-all text-xs font-bold shadow-md active:scale-95'
+                    >
+                        <FaDownload className='text-xs'/>
+                        INSTALL APP
+                    </button>
+                )}
 
                 {/* FEEDBACK BUTTON */}
                 <a 
