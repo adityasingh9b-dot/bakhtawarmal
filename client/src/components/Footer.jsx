@@ -2,27 +2,21 @@ import React, { useState, useEffect } from 'react'
 import { FaWhatsapp, FaDownload, FaCommentDots } from "react-icons/fa"; 
 
 const Footer = () => {
-  // PWA install prompt state handle karne ke liye hooks
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [isInstallable, setIsInstallable] = useState(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
-      // Browser ke default prompt ko roko
+      // Browser ke default prompt ko roko aur state me save karo
       e.preventDefault();
-      // Event ko state me save karo taaki click par use kar sakein
       setDeferredPrompt(e);
-      // Button ko screen par active/show karo
-      setIsInstallable(true);
+      console.log('PWA installation prompt is ready to be triggered!');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Agar app already install ho jaye toh button gayab kar do
     window.addEventListener('appinstalled', () => {
       setDeferredPrompt(null);
-      setIsInstallable(false);
-      console.log('AdiMart app successfully installed from footer!');
+      alert('AdiMart app aapke home screen par successfully save ho gayi hai! 🎉');
     });
 
     return () => {
@@ -31,29 +25,34 @@ const Footer = () => {
   }, []);
 
   const handleInstallClick = async (e) => {
-    e.preventDefault(); // Kisi external link par jane se roko
+    e.preventDefault();
     
-    if (!deferredPrompt) return;
-
-    // Browser ka official install prompt pop-up show karo
-    deferredPrompt.prompt();
-
-    // User ka choice check karo
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      console.log('User accepted the AdiMart install prompt');
+    // 1. Agar browser ne native prompt ready kar diya hai
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      }
+      setDeferredPrompt(null);
+    } else {
+      // 2. Fallback: Agar browser prompt ready nahi hai (iOS/Safari ya chrome delay)
+      // Check if it's iOS
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      
+      if (isIOS) {
+        alert("iPhone/iPad ke liye:\n1. Neeche Share button (📤) par click karein.\n2. Thoda niche jaakar 'Add to Home Screen' (+ ) par tap karein!");
+      } else {
+        alert("Shortcut lagane ke liye:\n1. Upar ya neeche diye gaye Browser ke 3-dots (⋮) par click karein.\n2. 'Add to Home Screen' ya 'Install App' par tap karein!");
+      }
     }
-    
-    // Prompt use hone ke baad state clean karo
-    setDeferredPrompt(null);
-    setIsInstallable(false);
   };
 
   return (
     <footer className='border-t bg-white sticky bottom-0 z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]'>
         <div className='container mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-3'>
             
-            {/* Copyright - Updated to Hira Department Store */}
+            {/* Copyright */}
             <p className='text-gray-500 text-[10px] md:text-xs order-3 md:order-1'>
                 © 2026 AdiMart
             </p>
@@ -61,18 +60,16 @@ const Footer = () => {
             {/* Main Actions Container */}
             <div className='flex flex-wrap items-center justify-center gap-2 order-1 md:order-2'>
                 
-                {/* DYNAMIC INSTALL APP BUTTON */}
-                {isInstallable && (
-                    <button 
-                        onClick={handleInstallClick}
-                        className='flex items-center gap-1.5 bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-all text-xs font-bold shadow-md active:scale-95'
-                    >
-                        <FaDownload className='text-xs'/>
-                        INSTALL APP
-                    </button>
-                )}
+                {/* ALWAYS VISIBLE INSTALL APP BUTTON */}
+                <button 
+                    onClick={handleInstallClick}
+                    className='flex items-center gap-1.5 bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-all text-xs font-bold shadow-md active:scale-95'
+                >
+                    <FaDownload className='text-xs'/>
+                    INSTALL APP
+                </button>
 
-                {/* FEEDBACK BUTTON (New Purple Button) */}
+                {/* FEEDBACK BUTTON */}
                 <a 
                     href='https://forms.gle/NmRBCiqYGCmhb9ck8'
                     target="_blank"
@@ -102,4 +99,4 @@ const Footer = () => {
   )
 }
 
-export default Footer
+export default Footer;
